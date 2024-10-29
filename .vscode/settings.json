@@ -6,7 +6,7 @@
       "port": 5432,
       "askForPassword": true,
       "driver": "PostgreSQL",
-      "name": "finance_p",
+      "name": "finance_db",
       "database": "finance_db",
       "username": "postgres"
     }
