@@ -177,3 +177,4 @@ pyrightconfig.json
 
 # Ignore database files
 finances.db
+dev.db

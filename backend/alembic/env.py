@@ -3,21 +3,25 @@ import os
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
-from app import db  # Import your db instance
-from app.models import *  # Import your models here
+from app import db 
+from app.models import *  
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+
 load_dotenv()
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 fileConfig(context.config.config_file_name)
+env = os.getenv('FLASK_ENV')
 
 # Set the SQLAlchemy URL from the environment variable
-context.config.set_main_option('sqlalchemy.url', os.getenv('DATABASE_URL'))
+if env == 'development':
+    context.config.set_main_option('sqlalchemy.url', 'sqlite:///dev.db')
+elif env == 'testing':
+        context.config.set_main_option('sqlalchemy.url', 'sqlite:///:memory:')
+else:
+    context.config.set_main_option('sqlalchemy.url', os.getenv('DATABASE_URL'))
 
-# Add your model's MetaData object here
+
 target_metadata = db.Model.metadata
 
 def run_migrations_offline():
