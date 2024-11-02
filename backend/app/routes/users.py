@@ -1,26 +1,34 @@
+from datetime import datetime
 from flask import Blueprint, jsonify, request
+import pytz
 from app.models import User, db
 from werkzeug.security import generate_password_hash
 
 user_bp = Blueprint('users', __name__)
 
 
+def convert_to_local_time(utc_dt, tz_name=None):
+    if utc_dt.tzinfo is None:
+        utc_dt = utc_dt.replace(tzinfo=pytz.utc)
+    if tz_name:
+        local_tz = pytz.timezone(tz_name)
+    else:
+        local_tz = datetime.now().astimezone().tzinfo
+    return utc_dt.astimezone(local_tz)
+
 @user_bp.route('/get_users', methods=['GET'])
 def get_users():
-    users = User.query.all()  # Now this works
-    users_list = [
-        {
+    users = User.query.all()
+    users_list = []
+    for user in users:
+        local_created_date = convert_to_local_time(user.created_date)
+        users_list.append({
             'user_id': user.user_id,
             'username': user.username,
             'email': user.email,
-            'created_date': user.created_date,
-            
-        }
-        for user in users
-    ]
+            'created_date': local_created_date.strftime('%Y-%m-%d %H:%M:%S'),
+        })
     return jsonify(users_list), 200
-
-
 
 @user_bp.route('/', methods=['GET'])
 def test():

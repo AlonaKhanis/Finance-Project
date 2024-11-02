@@ -1,7 +1,7 @@
-
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_migrate import Migrate
+import pytz
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -13,8 +13,8 @@ class User(db.Model):
     username = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_date = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_date = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
     profile_picture = db.Column(db.String)
 
     # Relationships
@@ -25,6 +25,22 @@ class User(db.Model):
     budgets = db.relationship('Budget', backref='user', lazy=True)
     expenses = db.relationship('Expense', backref='user', lazy=True)
 
+    def get_created_date_local(self, tz_name=None):
+        if tz_name:
+            local_tz = pytz.timezone(tz_name)
+        else:
+            local_tz = datetime.now().astimezone().tzinfo
+        return self.created_date.astimezone(local_tz)
+
+    def get_updated_date_local(self, tz_name=None):
+        if self.updated_date:
+            if tz_name:
+                local_tz = pytz.timezone(tz_name)
+            else:
+                local_tz = datetime.now().astimezone().tzinfo
+            return self.updated_date.astimezone(local_tz)
+        return None
+
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
 
@@ -34,7 +50,7 @@ class AuditLog(db.Model):
     next_occurrence = db.Column(db.DateTime)
     table_name = db.Column(db.String)
     record_id = db.Column(db.Integer)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Category(db.Model):
     __tablename__ = 'categories'
@@ -44,8 +60,8 @@ class Category(db.Model):
     name = db.Column(db.String, nullable=False)
     type = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_date = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_date = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     budgets = db.relationship('Budget', backref='category', lazy=True)
@@ -60,8 +76,8 @@ class Goal(db.Model):
     target_amount = db.Column(db.Float, nullable=False)
     current_amount = db.Column(db.Float, nullable=False)
     deadline = db.Column(db.DateTime)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_date = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_date = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
 
 class Notification(db.Model):
     __tablename__ = 'notifications'
@@ -71,7 +87,7 @@ class Notification(db.Model):
     message = db.Column(db.String, nullable=False)
     type = db.Column(db.String)
     is_read = db.Column(db.Boolean)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Budget(db.Model):
     __tablename__ = 'budgets'
@@ -82,8 +98,8 @@ class Budget(db.Model):
     amount = db.Column(db.Float, nullable=False)
     start_date = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_date = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_date = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
 
 class Expense(db.Model):
     __tablename__ = 'expenses'
@@ -93,8 +109,8 @@ class Expense(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.category_id'), nullable=False)
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.String)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_date = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_date = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
     is_recurring = db.Column(db.Boolean)
 
     # Relationships
@@ -108,7 +124,7 @@ class Attachment(db.Model):
     transaction_id = db.Column(db.Integer, db.ForeignKey('expenses.expense_id'), nullable=False)
     file_path = db.Column(db.String, nullable=False)
     file_type = db.Column(db.String, nullable=False)
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 class RecurringTransaction(db.Model):
     __tablename__ = 'recurring_transactions'
@@ -118,5 +134,5 @@ class RecurringTransaction(db.Model):
     interval = db.Column(db.String, nullable=False)
     next_occurrence = db.Column(db.DateTime)
     end_date = db.Column(db.DateTime)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_date = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_date = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
