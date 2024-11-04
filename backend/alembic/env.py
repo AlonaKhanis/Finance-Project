@@ -15,12 +15,11 @@ env = os.getenv('FLASK_ENV')
 
 # Set the SQLAlchemy URL from the environment variable
 if env == 'development':
-    context.config.set_main_option('sqlalchemy.url', 'sqlite:///dev.db')
+    context.config.set_main_option('sqlalchemy.url', 'sqlite:///instance/dev.db')
 elif env == 'testing':
-        context.config.set_main_option('sqlalchemy.url', 'sqlite:///:memory:')
+    context.config.set_main_option('sqlalchemy.url', 'sqlite:///:memory:')
 else:
     context.config.set_main_option('sqlalchemy.url', os.getenv('DATABASE_URL'))
-
 
 target_metadata = db.Model.metadata
 
