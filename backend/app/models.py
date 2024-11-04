@@ -7,22 +7,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 db = SQLAlchemy()
 migrate = Migrate()
 
-def get_created_date_local(self, tz_name=None):
-    if tz_name:
-        local_tz = pytz.timezone(tz_name)
-    else:
-        local_tz = datetime.now().astimezone().tzinfo
-    return self.created_date.astimezone(local_tz)
-
-def get_updated_date_local(self, tz_name=None):
-    if self.updated_date:
-        if tz_name:
-            local_tz = pytz.timezone(tz_name)
-        else:
-            local_tz = datetime.now().astimezone().tzinfo
-        return self.updated_date.astimezone(local_tz)
-    return None
-
 class User(db.Model):
     __tablename__ = 'users'
 
