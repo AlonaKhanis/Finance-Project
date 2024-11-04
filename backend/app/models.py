@@ -20,6 +20,7 @@ class User(db.Model):
     profile_picture = db.Column(db.String)
     is_verified = db.Column(db.Boolean, default=False)
     verification_token = db.Column(db.String, nullable=True)
+    role = db.Column(db.String, default='user')
 
     # Relationships
     audit_logs = db.relationship('AuditLog', backref='user', lazy=True)
