@@ -99,6 +99,7 @@ def login():
     email = data.get('email')
     password = data.get('password')
 
+
     user = User.query.filter_by(email=email).first()
 
     if user is None or not user.check_password(password):
@@ -110,6 +111,6 @@ def login():
         current_app.config['SECRET_KEY'],
         algorithm="HS256"
     )
-
+    
     return jsonify({"token": token}), 200
 

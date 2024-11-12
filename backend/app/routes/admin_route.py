@@ -19,8 +19,11 @@ def role_required(role):
                 current_user = User.query.get(data['user_id'])
                 if not current_user:
                     return jsonify({"error": "User not found!"}), 404
-                if current_user.role != role:
-                    return jsonify({"error": "Access denied for this role."}), 403
+                
+                # Allow if current_user's role matches or if it's the user's own data
+                if current_user.role != role and current_user.user_id != kwargs.get('user_id'):
+                    return jsonify({"error": "Access denied."}), 403
+
             except jwt.ExpiredSignatureError:
                 return jsonify({"error": "Token has expired!"}), 401
             except jwt.InvalidTokenError:
