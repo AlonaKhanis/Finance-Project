@@ -30,21 +30,21 @@ def register():
     last_name = data.get('last_name')
     role = data.get('role', 'user')
     
+    if not email or not password or not first_name or not last_name:
+        return jsonify({"error": "All fields are required."}), 400
+
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Email already registered."}), 400
 
-    # Check if the email is already pending verification
     if email in unverified_users:
         return jsonify({"error": "Email verification in progress. Please check your email."}), 400
 
-    # Generate verification token
     token = jwt.encode(
-        {"email": email, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},  #
+        {"email": email, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
         current_app.config['SECRET_KEY'],
         algorithm="HS256"
     )
 
-    # Store user details temporarily
     unverified_users[email] = {
         "first_name": first_name,
         "last_name": last_name,
@@ -53,11 +53,11 @@ def register():
         "role": role,
     }
 
-    # Generate verification URL
     verification_url = url_for('auth.verify_email', token=token, _external=True)
     send_verification_email(email, verification_url)
 
     return jsonify({"message": "Email verification in progress."}), 201
+
 
 
 @auth_bp.route('/verify_email/<token>', methods=['GET'])
