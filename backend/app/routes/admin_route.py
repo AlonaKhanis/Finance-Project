@@ -3,7 +3,11 @@ from flask import current_app, jsonify, request
 import jwt
 from app.models import User
 
-def role_required(role):
+def role_required(roles):
+    # Ensure roles is a list, even if it's passed as a single string
+    if isinstance(roles, str):
+        roles = [roles]
+    
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -19,9 +23,9 @@ def role_required(role):
                 current_user = User.query.get(data['user_id'])
                 if not current_user:
                     return jsonify({"error": "User not found!"}), 404
-                
-                # Allow if current_user's role matches or if it's the user's own data
-                if current_user.role != role and current_user.user_id != kwargs.get('user_id'):
+
+                # Check if the current user's role is in the list of allowed roles
+                if current_user.role not in roles and current_user.user_id != kwargs.get('user_id'):
                     return jsonify({"error": "Access denied."}), 403
 
             except jwt.ExpiredSignatureError:

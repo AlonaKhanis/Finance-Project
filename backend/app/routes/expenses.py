@@ -113,12 +113,27 @@ def update_expense(current_user, expense_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    
+
+@expense_bp.route('/get_expenses_by_category/<int:category_id>', methods=['GET'])
+@role_required('user')
+def get_expenses_by_category(current_user, category_id):
+    expenses = Expense.query.filter_by(user_id=current_user.user_id, category_id=category_id).all()
+    expenses_list = []
+    for expense in expenses:
+        expenses_list.append({
+            'expense_id': expense.expense_id,
+            'amount': expense.price,
+            'description': expense.description,
+            'created_date': expense.created_date.strftime('%Y-%m-%d %H:%M:%S'),
+        })
+    return jsonify(expenses_list), 200    
 
 # move to category route
-@expense_bp.route('/get_expense_categories', methods=['GET'])
-@role_required('user', 'admin')
-def get_expense_categories(current_user):
-    categories = Category.query.filter_by(user_id=current_user.user_id, type='Expense').all()
+@expense_bp.route('/get_categories', methods=['GET'])
+@role_required(['user','admin'])
+def get_expense_categories(current_user):    
+    categories = Category.query.all()
     categories_list = []
     for category in categories:
         categories_list.append({

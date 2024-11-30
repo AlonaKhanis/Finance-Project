@@ -1,11 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone
-from flask_migrate import Migrate
-import pytz
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
-migrate = Migrate()
+
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -52,10 +50,10 @@ class Category(db.Model):
     __tablename__ = 'categories'
 
     category_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=True)
     name = db.Column(db.String, nullable=False)
-    type = db.Column(db.String, nullable=False)
     description = db.Column(db.String)
+    is_global = db.Column(db.Boolean, default=False) 
     created_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_date = db.Column(db.DateTime, onupdate=lambda: datetime.now(timezone.utc))
 

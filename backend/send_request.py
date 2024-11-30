@@ -15,8 +15,8 @@ import requests
 
 # url = "http://localhost:5000/login"
 # data = {
-#     "email": "alonakhani1993@gmail.com",      
-#     "password": "some",
+#     "email": "john.doe@example.com",      
+#     "password": "john123",
 # }
 
 # response = requests.post(url, json=data)
@@ -89,11 +89,11 @@ import requests
 
 # url = "http://localhost:5000/register"
 # data = {
-#     "email": "john.doe@example.com",
+#     "email": "john.doe2@example.com",
 #     "password": "john123",
 #     "first_name": "John",
 #     "last_name": "Doe",
-#     "role": "user"
+#     "role": "admin"
 # }
 
 # response = requests.post(url, json=data)
@@ -129,7 +129,7 @@ import requests
 # url = "http://localhost:5000/add_expense"
 
 # headers = {
-#     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMCwicm9sZSI6InVzZXIiLCJleHAiOjE3MzI3NTE2NDh9.ies8qnGhcW4uksc1W1j8AA7AGFzuP6qWJ2mbzA4HT-A",
+#     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoidXNlciIsImV4cCI6MTczMzAwMjU4MH0.nnjJv5Q-S8iJxhZvHvoepJ5imoZwFh8iYyOlfSS5Opc",
 #     "Content-Type" : "application/json"
 # }
 
@@ -185,9 +185,9 @@ import requests
 
 # update expense #
 
-# url = "http://localhost:5000/update_expense/1"
+# url = "http://localhost:5000/update_expense/2"
 
-# headers = { "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMCwicm9sZSI6InVzZXIiLCJleHAiOjE3MzI3NTE2NDh9.ies8qnGhcW4uksc1W1j8AA7AGFzuP6qWJ2mbzA4HT-A"
+# headers = { "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMCwicm9sZSI6InVzZXIiLCJleHAiOjE3MzI4NDQyMzl9.tSiHF-6Y8La1qGedIHuitxa8sATrW4fIzTdwamcjlNQ"
 # }
 
 # data = { 
@@ -199,3 +199,29 @@ import requests
 
 # response = requests.put(url, headers=headers, json=data)
 # print("Response is not JSON:", response.text)
+
+
+
+# get all categories #
+
+# url = "http://localhost:5000/get_categories"
+
+# headers = { 
+#     "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzMwMDI0OTh9.XiQt3mPZpr9036w5Cm8o6dEcIgVlxOAS_Etjd6ap_1E"
+
+# }
+
+# response = requests.get(url, headers=headers)
+# print("Response is not JSON:", response.text)
+
+
+# get expense by category #
+
+url = "http://localhost:5000/get_expenses_by_category/1"
+
+headers = {
+    "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoidXNlciIsImV4cCI6MTczMzAwMjU4MH0.nnjJv5Q-S8iJxhZvHvoepJ5imoZwFh8iYyOlfSS5Opc"
+}
+
+response = requests.get(url, headers=headers)
+print("Response is not JSON:", response.text)

@@ -1,8 +1,8 @@
-"""Make timestamps timezone-aware
+"""Initial migration
 
-Revision ID: c47c13f6b798
-Revises: 70a702f5707c
-Create Date: 2024-11-02 14:31:16.400891
+Revision ID: e49a8930cae5
+Revises: 
+Create Date: 2024-11-30 13:15:48.850989
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c47c13f6b798'
-down_revision = '70a702f5707c'
+revision = 'e49a8930cae5'
+down_revision = None
 branch_labels = None
 depends_on = None
 
