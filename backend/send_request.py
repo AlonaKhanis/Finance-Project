@@ -87,23 +87,23 @@ import requests
 
 # register user #
 
-# url = "http://localhost:5000/register"
-# data = {
-#     "email": "john.doe2@example.com",
-#     "password": "john123",
-#     "first_name": "John",
-#     "last_name": "Doe",
-#     "role": "admin"
-# }
+url = "http://localhost:5000/register"
+data = {
+    "email": "john.doe3@example.com",
+    "password": "john123",
+    "first_name": "John",
+    "last_name": "Doe",
+    "role": "user"
+}
 
-# response = requests.post(url, json=data)
+response = requests.post(url, json=data)
 
-# if response.status_code == 201:
-#     print("Registration successful:", response.json())
-# elif response.status_code == 400:
-#     print("Error:", response.json())
-# else:
-#     print("Unexpected response:", response.status_code, response.json())
+if response.status_code == 201:
+    print("Registration successful:", response.json())
+elif response.status_code == 400:
+    print("Error:", response.json())
+else:
+    print("Unexpected response:", response.status_code, response.json())
 
 # get all users #
 
@@ -217,11 +217,11 @@ import requests
 
 # get expense by category #
 
-url = "http://localhost:5000/get_expenses_by_category/1"
+# url = "http://localhost:5000/get_expenses_by_category/1"
 
-headers = {
-    "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoidXNlciIsImV4cCI6MTczMzAwMjU4MH0.nnjJv5Q-S8iJxhZvHvoepJ5imoZwFh8iYyOlfSS5Opc"
-}
+# headers = {
+#     "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoidXNlciIsImV4cCI6MTczMzAwMjU4MH0.nnjJv5Q-S8iJxhZvHvoepJ5imoZwFh8iYyOlfSS5Opc"
+# }
 
-response = requests.get(url, headers=headers)
-print("Response is not JSON:", response.text)
+# response = requests.get(url, headers=headers)
+# print("Response is not JSON:", response.text)

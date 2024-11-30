@@ -1,12 +1,14 @@
-from datetime import datetime, timedelta, timezone
-import jwt
-from flask import current_app, url_for, Blueprint, jsonify, request
-from werkzeug.security import generate_password_hash
-from app.models import User , db
-import smtplib
-from email.mime.text import MIMEText
 
-auth_bp = Blueprint('auth', __name__)
+from datetime import datetime, timedelta, timezone
+from flask import current_app, url_for
+from werkzeug.security import generate_password_hash
+from app.models import User
+import jwt
+from email.mime.text import MIMEText
+import smtplib
+from werkzeug.exceptions import BadRequest
+
+
 
 unverified_users = {}
 
@@ -16,35 +18,37 @@ def send_verification_email(email, verification_url):
     msg['From'] = 'no-reply@example.com'  
     msg['To'] = email
 
-    # Use the local debugging SMTP server
     with smtplib.SMTP('localhost', 1025) as server:
         server.send_message(msg)
 
 
-@auth_bp.route('/register', methods=['POST'])
-def register():
-    data = request.get_json()
+def register_user(data , db):
     email = data.get('email')
     password = data.get('password')
     first_name = data.get('first_name')
     last_name = data.get('last_name')
     role = data.get('role', 'user')
-    
+
+  
     if not email or not password or not first_name or not last_name:
-        return jsonify({"error": "All fields are required."}), 400
+        raise ValueError("All fields are required.")
 
+   
     if User.query.filter_by(email=email).first():
-        return jsonify({"error": "Email already registered."}), 400
+        raise ValueError("Email already registered.")
 
+ 
     if email in unverified_users:
-        return jsonify({"error": "Email verification in progress. Please check your email."}), 400
+        raise ValueError("Email verification in progress. Please check your email.")
 
+    # Generate verification token
     token = jwt.encode(
         {"email": email, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
         current_app.config['SECRET_KEY'],
         algorithm="HS256"
     )
 
+    
     unverified_users[email] = {
         "first_name": first_name,
         "last_name": last_name,
@@ -53,22 +57,23 @@ def register():
         "role": role,
     }
 
+    # Create verification URL
     verification_url = url_for('auth.verify_email', token=token, _external=True)
+
+    
     send_verification_email(email, verification_url)
 
-    return jsonify({"message": "Email verification in progress."}), 201
+    return {"message": "Email verification in progress."}, 201
 
-
-
-@auth_bp.route('/verify_email/<token>', methods=['GET'])
-def verify_email(token):
+def verify_email_service(token , db):
     try:
+        # Decode the token
         data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
         email = data['email']
 
         # Check if the email is in the temporary storage
         if email not in unverified_users:
-            return jsonify({"error": "Invalid or expired verification token."}), 400
+            raise BadRequest("Invalid or expired verification token.")
 
         # Create the user in the database
         user_info = unverified_users[email]
@@ -86,31 +91,27 @@ def verify_email(token):
         # Remove from temporary storage
         del unverified_users[email]
 
-        return jsonify({"message": "Email verified successfully! You can now log in."}), 200
+        return {"message": "Email verified successfully! You can now log in."}
+
     except jwt.ExpiredSignatureError:
-        return jsonify({"error": "Verification link has expired."}), 400
+        raise BadRequest("Verification link has expired.")
     except jwt.InvalidTokenError:
-        return jsonify({"error": "Invalid verification token."}), 400
+        raise BadRequest("Invalid verification token.")
     
 
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
+def login_user(data , db):    
     email = data.get('email')
     password = data.get('password')
-
 
     user = User.query.filter_by(email=email).first()
 
     if user is None or not user.check_password(password):
-        return jsonify({"error": "Invalid email or password."}), 401
+        raise ValueError("Invalid email or password.")
 
-    
     token = jwt.encode(
         {"user_id": user.user_id, "role": user.role, "exp": datetime.now(timezone.utc) + timedelta(hours=10)},
         current_app.config['SECRET_KEY'],
         algorithm="HS256"
     )
-    
-    return jsonify({"token": token}), 200
 
+    return {"token": token}, 200 

@@ -1,9 +1,11 @@
 
 from flask import Blueprint
-from .users import user_bp  
-from .auth import auth_bp
-from .reset_password import reset_password_bp
-from .expenses import expense_bp
+from app.router.users import user_bp
+from app.router.auth import auth_bp
+from app.router.reset_password import reset_password_bp
+from app.router.expenses import expense_bp
+
+from app.router.users import user_bp
 
 main = Blueprint('main', __name__)
 

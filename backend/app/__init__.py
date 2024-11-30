@@ -1,8 +1,9 @@
 from flask import Flask
 from dotenv import load_dotenv
-from app.config import get_config
-from app.routes import register_routes
-from app.models import db, Category  
+
+from .router import register_routes
+from .config import get_config
+from app.models import db, Category
 
 
 load_dotenv()
