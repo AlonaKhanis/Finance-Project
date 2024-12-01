@@ -22,6 +22,24 @@ def send_verification_email(email, verification_url):
         server.send_message(msg)
 
 
+def send_password_reset_email(email, reset_token):
+    smtp_server = "localhost"
+    smtp_port = 1025
+    sender_email = "no-reply@example.com"
+
+    reset_url = f"http://localhost:5000/reset_password/{reset_token}"
+    body = f"Click the link to reset your password: {reset_url}"
+
+    msg = MIMEText(body, 'plain')
+    msg['Subject'] = "Password Reset Request"
+    msg['From'] = sender_email
+    msg['To'] = email
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.sendmail(sender_email, email, msg.as_string())
+        print(f"Simulated email sent to {email}")
+
+
 def register_user(data , db):
     email = data.get('email')
     password = data.get('password')
@@ -41,7 +59,6 @@ def register_user(data , db):
     if email in unverified_users:
         raise ValueError("Email verification in progress. Please check your email.")
 
-    # Generate verification token
     token = jwt.encode(
         {"email": email, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
         current_app.config['SECRET_KEY'],
@@ -57,7 +74,7 @@ def register_user(data , db):
         "role": role,
     }
 
-    # Create verification URL
+    
     verification_url = url_for('auth.verify_email', token=token, _external=True)
 
     
@@ -67,15 +84,15 @@ def register_user(data , db):
 
 def verify_email_service(token , db):
     try:
-        # Decode the token
+        
         data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
         email = data['email']
 
-        # Check if the email is in the temporary storage
+        
         if email not in unverified_users:
             raise BadRequest("Invalid or expired verification token.")
 
-        # Create the user in the database
+        
         user_info = unverified_users[email]
         user = User(
             first_name=user_info['first_name'],
@@ -88,7 +105,6 @@ def verify_email_service(token , db):
         db.session.add(user)
         db.session.commit()
 
-        # Remove from temporary storage
         del unverified_users[email]
 
         return {"message": "Email verified successfully! You can now log in."}
@@ -115,3 +131,43 @@ def login_user(data , db):
     )
 
     return {"token": token}, 200 
+
+
+
+def change_password_service(data , current_user , db):
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+
+    if not current_user.check_password(old_password):
+        raise ValueError("Invalid password.")
+
+    current_user.set_password(new_password)
+    db.session.commit()
+
+    return {"message": "Password changed successfully."}, 200
+
+def reset_password_service(new_password , token , db):
+    try:
+        data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+        user_id = data['user_id']
+
+        if user_id is None:
+            raise BadRequest("Invalid or expired reset token.")
+        
+        user = User.query.filter_by(user_id=user_id).first()
+        if user is None:
+            raise BadRequest("Invalid user.")
+        
+        user.set_password(new_password)
+        db.session.commit()
+
+        
+        print(f"Password reset for user {user_id}")
+        return {"message": "Password reset successfully."}, 200
+    
+    except jwt.ExpiredSignatureError:
+        raise BadRequest("Reset link has expired.")
+    except jwt.InvalidTokenError:
+        raise BadRequest("Invalid reset token.")
+    except Exception as e:
+        raise BadRequest(f"An unexpected error occurred: {str(e)}")

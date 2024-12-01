@@ -4,7 +4,7 @@ import jwt
 from app.models import User
 
 def role_required(roles):
-    # Ensure roles is a list, even if it's passed as a single string
+    
     if isinstance(roles, str):
         roles = [roles]
     

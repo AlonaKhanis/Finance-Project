@@ -15,8 +15,8 @@ import requests
 
 # url = "http://localhost:5000/login"
 # data = {
-#     "email": "john.doe@example.com",      
-#     "password": "john123",
+#     "email": "john.doe2@example.com",      
+#     "password": "112233",
 # }
 
 # response = requests.post(url, json=data)
@@ -24,13 +24,17 @@ import requests
 
 # get user by id #
 
-# url = "http://localhost:5000/get_user/5"
+# url = "http://localhost:5000/get_user_by_id/3"
 # headers = {
-#     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMSwicm9sZSI6InVzZXIiLCJleHAiOjE3MzE0NDIyODd9.0J4GAXW0P3GLbE8Skfvk-bRthroIFVpnHB_RS0J4ZEw"
+#     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzMwOTIyMzV9.LkVTRzN_A0lT8GYj16wDW3OWbfr-OwZ7cTfAbpqGu5c"
 # }
 
 # response = requests.get(url, headers=headers)
-# print(response.json()) 
+
+# if response.headers.get("Content-Type") == "application/json":
+#     print("Response JSON:", response.json())
+# else:
+#     print("Response is not JSON:", response.text)
 
 
 # admin token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5LCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzE0NDI5NjN9.yBjBrzrxXmPZV6Qbnsf2tFTssjL50Oc0VGrIrWerWDs 
@@ -39,7 +43,7 @@ import requests
 # update user #
 
 
-# url = "http://localhost:5000/update_user/10"
+# url = "http://localhost:5000/update_user/1"
 # headers = {
 #     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxMCwicm9sZSI6InVzZXIiLCJleHAiOjE3MzE0NDY3Nzd9.T4s3L1tNPFmgAKvJ4FREIXuQmPgr5ebSuwtJ6QLDnfs",
 #     "Content-Type": "application/json"
@@ -87,34 +91,35 @@ import requests
 
 # register user #
 
-url = "http://localhost:5000/register"
-data = {
-    "email": "john.doe3@example.com",
-    "password": "john123",
-    "first_name": "John",
-    "last_name": "Doe",
-    "role": "user"
-}
+# url = "http://localhost:5000/register"
+# data = {
+#     "email": "john.doe3@example.com",
+#     "password": "john123",
+#     "first_name": "John",
+#     "last_name": "Doe",
+#     "role": "user"
+# }
 
-response = requests.post(url, json=data)
+# response = requests.post(url, json=data)
 
-if response.status_code == 201:
-    print("Registration successful:", response.json())
-elif response.status_code == 400:
-    print("Error:", response.json())
-else:
-    print("Unexpected response:", response.status_code, response.json())
+# if response.status_code == 201:
+#     print("Registration successful:", response.json())
+# elif response.status_code == 400:
+#     print("Error:", response.json())
+# else:
+#     print("Unexpected response:", response.status_code, response.json())
 
 # get all users #
 
-# url = "http://localhost:5000/get_users"
+# url = "http://localhost:5000/get_all_users"
 
 
 # headers = {
-#     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo5LCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzI2NzkwNjR9.83RIf913cNLgvQoR9sKlNS5xQ1noKiwTdAW5u8mKbnI"
+#     "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzMwOTIyMzV9.LkVTRzN_A0lT8GYj16wDW3OWbfr-OwZ7cTfAbpqGu5c"
 # }
 
 # response = requests.get(url, headers=headers)
+# print("Response is not JSON:", response.text)
 
 
 # try:
@@ -225,3 +230,25 @@ else:
 
 # response = requests.get(url, headers=headers)
 # print("Response is not JSON:", response.text)
+
+
+# reset_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzMwOTIyMzV9.LkVTRzN_A0lT8GYj16wDW3OWbfr-OwZ7cTfAbpqGu5c"
+
+# url = "http://localhost:5000/reset_password/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzMwOTIyMzV9.LkVTRzN_A0lT8GYj16wDW3OWbfr-OwZ7cTfAbpqGu5c"
+
+# new_password = "112233"
+
+# payload = {
+#     "token": reset_token,
+#     "new_password": new_password
+# }
+
+
+# response = requests.post(url, json=payload)
+
+# if response.status_code == 200:
+#     print("Password reset successful!")
+#     print(response.json())
+# else:
+#     print(f"Failed to reset password. Status code: {response.status_code}")
+#     print(response.json())  
