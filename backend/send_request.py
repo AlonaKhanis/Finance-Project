@@ -15,8 +15,8 @@ import requests
 
 # url = "http://localhost:5000/login"
 # data = {
-#     "email": "john.doe2@example.com",      
-#     "password": "112233",
+#     "email": "john.doe4@example.com",      
+#     "password": "123",
 # }
 
 # response = requests.post(url, json=data)
@@ -93,8 +93,8 @@ import requests
 
 # url = "http://localhost:5000/register"
 # data = {
-#     "email": "john.doe3@example.com",
-#     "password": "john123",
+#     "email": "john.doe4@example.com",
+#     "password": "123",
 #     "first_name": "John",
 #     "last_name": "Doe",
 #     "role": "user"
@@ -252,3 +252,40 @@ import requests
 # else:
 #     print(f"Failed to reset password. Status code: {response.status_code}")
 #     print(response.json())  
+
+
+
+# url = "http://localhost:5000/get_category/1"
+
+# headers = {
+#     "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzQzNzc3NzZ9.TDlPlz4EdEMTwQgLkJ1tPP4vknqtkfKdSkspRGYoPiM"
+# }
+
+# response = requests.get(url, headers=headers)
+# print("Response is not JSON:", response.text)
+
+
+# url = "http://localhost:5000/add_category"
+
+# headers = {
+#     "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzQzNzc3NzZ9.TDlPlz4EdEMTwQgLkJ1tPP4vknqtkfKdSkspRGYoPiM",
+#     "Content-Type" : "application/json",
+# }
+
+# data = {
+#     "name" : "Food",
+#     "description" : "Food expenses"
+# }
+
+# response = requests.post(url, headers=headers, json=data)
+# print("Response is not JSON:", response.text)
+
+
+# url = "http://localhost:5000/get_categories"
+
+# headers = {
+#     "Authorization" : "Beraer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3MzQzNzc3NzZ9.TDlPlz4EdEMTwQgLkJ1tPP4vknqtkfKdSkspRGYoPiM "
+# }
+
+# response = requests.get(url, headers=headers)
+# print("Response is not JSON:", response.text)

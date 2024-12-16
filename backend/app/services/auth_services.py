@@ -7,6 +7,12 @@ import jwt
 from email.mime.text import MIMEText
 import smtplib
 from werkzeug.exceptions import BadRequest
+from app.models import db
+
+import logging
+logger = logging.getLogger(__name__)
+
+# python -m smtpd -c DebuggingServer -n localhost:1025      
 
 
 
@@ -115,23 +121,45 @@ def verify_email_service(token , db):
         raise BadRequest("Invalid verification token.")
     
 
-def login_user(data , db):    
-    email = data.get('email')
-    password = data.get('password')
+def login_user(data):
+    try:
+        email = data.get('email')
+        password = data.get('password')
 
-    user = User.query.filter_by(email=email).first()
+        if not email or not password:
+            logger.warning("Login attempt with missing email or password.")
+            raise ValueError("Email and password are required.")
 
-    if user is None or not user.check_password(password):
-        raise ValueError("Invalid email or password.")
+        user = User.query.filter_by(email=email).first()
 
-    token = jwt.encode(
-        {"user_id": user.user_id, "role": user.role, "exp": datetime.now(timezone.utc) + timedelta(hours=10)},
-        current_app.config['SECRET_KEY'],
-        algorithm="HS256"
-    )
+        if user is None:
+            logger.warning(f"Login failed: User with email {email} not found.")
+            raise ValueError("Invalid email or password.")
 
-    return {"token": token}, 200 
+        if not user.check_password(password):
+            logger.warning(f"Login failed: Invalid password for user {email}.")
+            raise ValueError("Invalid email or password.")
 
+        # Generate JWT token
+        token = jwt.encode(
+            {
+                "user_id": user.user_id,
+                "role": user.role,
+                "exp": datetime.now(timezone.utc) + timedelta(hours=10)
+            },
+            current_app.config['SECRET_KEY'],
+            algorithm="HS256"
+        )
+
+        logger.info(f"User {email} logged in successfully.")
+        return {"token": token}, 200
+
+    except ValueError as e:
+        logger.error(f"Login error: {str(e)}")
+        return {"error": str(e)}, 400 
+    except Exception as e:
+        logger.exception("Unexpected error during login.") 
+        return {"error": "An unexpected error occurred. Please try again later."}, 500
 
 
 def change_password_service(data , current_user , db):

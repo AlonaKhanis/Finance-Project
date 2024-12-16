@@ -1,8 +1,5 @@
 from datetime import datetime
 from flask import Blueprint, current_app, jsonify, request
-import jwt
-import pytz
-from app.models import User
 from app.services.users_services import delete_User, get_User_profile, get_all_users , fetch_user_by_id, update_User 
 from .admin_route import role_required
 from app.models import db

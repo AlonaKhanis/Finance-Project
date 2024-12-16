@@ -129,17 +129,4 @@ def get_expenses_by_category(current_user, category_id):
         })
     return jsonify(expenses_list), 200    
 
-# move to category route
-@expense_bp.route('/get_categories', methods=['GET'])
-@role_required(['user','admin'])
-def get_expense_categories(current_user):    
-    categories = Category.query.all()
-    categories_list = []
-    for category in categories:
-        categories_list.append({
-            'category_id': category.category_id,
-            'name': category.name,
-            'description': category.description,
-            'created_date': category.created_date.strftime('%Y-%m-%d %H:%M:%S'),
-        })
-    return jsonify(categories_list), 200
+

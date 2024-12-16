@@ -33,26 +33,15 @@ def verify_email(token):
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-
-    try:
-        response, status_code = login_user(data , db)
-        return jsonify(response), status_code
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+    response, status_code = login_user(data)
+    return jsonify(response), status_code
 
 
 @auth_bp.route('/change_password', methods=['PUT'])
 def change_password(current_user):
-    
-    try:
         data = request.get_json()
-        change_password_service(data, current_user, db)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400    
-
-    return jsonify({"message": "Password changed successfully."}), 200
+        response, status_code = change_password_service(data, current_user, db)
+        return jsonify(response), status_code
 
 
 @auth_bp.route('/resrt_password/<token>', methods=['POST'])
