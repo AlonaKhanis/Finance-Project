@@ -8,6 +8,7 @@ from email.mime.text import MIMEText
 import smtplib
 from werkzeug.exceptions import BadRequest
 from app.models import db
+from sqlalchemy.exc import SQLAlchemyError
 
 import logging
 logger = logging.getLogger(__name__)
@@ -46,59 +47,82 @@ def send_password_reset_email(email, reset_token):
         print(f"Simulated email sent to {email}")
 
 
-def register_user(data , db):
-    email = data.get('email')
-    password = data.get('password')
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    role = data.get('role', 'user')
-
-  
-    if not email or not password or not first_name or not last_name:
-        raise ValueError("All fields are required.")
-
-   
-    if User.query.filter_by(email=email).first():
-        raise ValueError("Email already registered.")
-
- 
-    if email in unverified_users:
-        raise ValueError("Email verification in progress. Please check your email.")
-
-    token = jwt.encode(
-        {"email": email, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
-        current_app.config['SECRET_KEY'],
-        algorithm="HS256"
-    )
-
-    
-    unverified_users[email] = {
-        "first_name": first_name,
-        "last_name": last_name,
-        "password_hash": generate_password_hash(password),
-        "verification_token": token,
-        "role": role,
-    }
-
-    
-    verification_url = url_for('auth.verify_email', token=token, _external=True)
-
-    
-    send_verification_email(email, verification_url)
-
-    return {"message": "Email verification in progress."}, 201
-
-def verify_email_service(token , db):
+def register_user(data):
     try:
-        
+        # Extract user data
+        email = data.get('email')
+        password = data.get('password')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        role = data.get('role', 'user')
+
+        # Validate the required fields
+        if not email or not password or not first_name or not last_name:
+            raise ValueError("All fields are required.")
+
+        # Check if the email is already registered
+        if User.query.filter_by(email=email).first():
+            raise ValueError("Email already registered.")
+
+        # Check if the email is currently in unverified users list
+        if email in unverified_users:
+            raise ValueError("Email verification in progress. Please check your email.")
+
+        # Generate a verification token
+        token = jwt.encode(
+            {"email": email, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
+            current_app.config['SECRET_KEY'],
+            algorithm="HS256"
+        )
+
+        validate_password_strength(password)
+
+        # Store the user's data temporarily in the unverified_users dictionary
+        unverified_users[email] = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "password_hash": generate_password_hash(password),
+            "verification_token": token,
+            "role": role,
+        }
+
+        # Generate the verification URL
+        verification_url = url_for('auth.verify_email', token=token, _external=True)
+
+        # Send the verification email
+        send_verification_email(email, verification_url)
+
+        return {"message": "Email verification in progress."}, 201
+
+    except ValueError as ve:
+        current_app.logger.warning(f"Registration error: {ve}")
+        return {"error": str(ve)}, 400
+
+    except jwt.ExpiredSignatureError:
+        current_app.logger.error("JWT token has expired.")
+        return {"error": "Expired token."}, 400
+
+    except jwt.InvalidTokenError:
+        current_app.logger.error("Invalid JWT token.")
+        return {"error": "Invalid token."}, 400
+
+    except Exception as e:
+        # Catch any unexpected errors
+        current_app.logger.exception(f"Unexpected error during registration: {e}")
+        return {"error": "An unexpected error occurred. Please try again later."}, 500
+
+
+def verify_email_service(token):
+    try:
+        # Decode the JWT token
         data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
         email = data['email']
 
-        
+        # Check if email is in unverified_users
         if email not in unverified_users:
-            raise BadRequest("Invalid or expired verification token.")
+            return {"error": "Invalid or expired verification token."}, 400
 
-        
+        # Get the user info from the unverified users
         user_info = unverified_users[email]
         user = User(
             first_name=user_info['first_name'],
@@ -108,17 +132,26 @@ def verify_email_service(token , db):
             role=user_info['role'],
         )
 
+        # Add user to the database
         db.session.add(user)
         db.session.commit()
 
+        # Remove the user from the unverified_users list
         del unverified_users[email]
 
-        return {"message": "Email verified successfully! You can now log in."}
+        # Return success message
+        return {"message": "Email verified successfully! You can now log in."}, 200
 
     except jwt.ExpiredSignatureError:
-        raise BadRequest("Verification link has expired.")
+        logger.warning("Verification link has expired.")
+        return {"error": "Verification link has expired."}, 400
     except jwt.InvalidTokenError:
-        raise BadRequest("Invalid verification token.")
+        logger.warning("Invalid verification token.")
+        return {"error": "Invalid verification token."}, 400
+    except Exception as e:
+        logger.exception(f"Unexpected error during email verification: {e}")
+        return {"error": "An unexpected error occurred during email verification."}, 500
+
     
 
 def login_user(data):
@@ -162,40 +195,83 @@ def login_user(data):
         return {"error": "An unexpected error occurred. Please try again later."}, 500
 
 
-def change_password_service(data , current_user , db):
-    old_password = data.get('old_password')
-    new_password = data.get('new_password')
+def change_password_service(data , current_user):
+    try:    
+        old_password = data.get('old_password')
+        new_password = data.get('new_password')
 
-    if not current_user.check_password(old_password):
-        raise ValueError("Invalid password.")
+        if not current_user.check_password(old_password):
+            raise ValueError("Invalid password.")
 
-    current_user.set_password(new_password)
-    db.session.commit()
+        validate_password_strength(new_password)
 
-    return {"message": "Password changed successfully."}, 200
+        if current_user.check_password(new_password):
+            raise ValueError("New password is invalid. Please try a different password.")
+            
 
-def reset_password_service(new_password , token , db):
-    try:
-        data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
-        user_id = data['user_id']
-
-        if user_id is None:
-            raise BadRequest("Invalid or expired reset token.")
-        
-        user = User.query.filter_by(user_id=user_id).first()
-        if user is None:
-            raise BadRequest("Invalid user.")
-        
-        user.set_password(new_password)
+        current_user.set_password(new_password)
         db.session.commit()
 
-        
-        print(f"Password reset for user {user_id}")
-        return {"message": "Password reset successfully."}, 200
-    
-    except jwt.ExpiredSignatureError:
-        raise BadRequest("Reset link has expired.")
-    except jwt.InvalidTokenError:
-        raise BadRequest("Invalid reset token.")
+        return {"message": "Password changed successfully."}, 200
+    except ValueError as ve:
+        logger.warning(f"Password change failed: {str(ve)}")
+        return {"error": str(ve)}, 400
+    except SQLAlchemyError as sae:
+        logger.error(f"Database error while changing password: {sae}")
+        return {"error": "A database error occurred. Please try again later."}, 500   
     except Exception as e:
-        raise BadRequest(f"An unexpected error occurred: {str(e)}")
+        logger.exception("Unexpected error during password change.")
+        return {"error": "An unexpected error occurred. Please try again later."}, 500    
+
+
+def reset_password_service(new_password, token):
+    """
+    Service function to validate a reset token and update the user's password.
+    """
+    try:
+        
+        data = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=["HS256"])
+        logger.info(f"Decoded token data: {data}")  
+        user_id = data.get('user_id')
+
+        if not user_id:
+            raise ValueError("Invalid or expired reset token.")
+
+        
+        user = User.query.filter_by(user_id=user_id).first()
+        if not user:
+            raise ValueError("User not found with the provided reset token.")
+
+        logger.info(f"User found: {user_id}") 
+        
+        validate_password_strength(new_password)
+
+       
+        user.set_password(new_password) 
+        db.session.commit()
+
+        logger.info(f"Password reset attempt for user {user_id}")
+        return {"message": "Password reset successfully."}, 200
+
+   
+    except jwt.ExpiredSignatureError:
+        logger.warning("Reset token has expired.")
+        return {"error": "The reset link has expired."}, 400
+    except jwt.InvalidTokenError:
+        logger.warning("Invalid reset token.")
+        return {"error": "Invalid reset token."}, 400
+    except ValueError as ve:
+        logger.warning(f"Validation error: {ve}")
+        return {"error": str(ve)}, 400
+    except SQLAlchemyError as se:
+        logger.error(f"Database error: {se}")
+        db.session.rollback()
+        return {"error": "A database error occurred. Please try again later."}, 500
+    except Exception as e:
+        logger.exception(f"Unexpected error: {e}")
+        return {"error": "An unexpected error occurred. Please try again later."}, 500
+
+
+def validate_password_strength(password):
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters long.")
