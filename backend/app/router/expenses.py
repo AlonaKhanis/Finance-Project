@@ -1,6 +1,5 @@
 from flask import Blueprint, current_app, jsonify, request
 from .admin_route import role_required
-import logging
 from app.services.expenses_service import (
     add_expense_service,
     get_expenses_service,
@@ -11,7 +10,6 @@ from app.services.expenses_service import (
 )
 
 expense_bp = Blueprint('expenses', __name__)
-logger = logging.getLogger(__name__)
 
 
 @expense_bp.route('/add_expense', methods=['POST'])
@@ -22,7 +20,7 @@ def add_expense(current_user):
         response, status_code = add_expense_service(data, current_user)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error in add_expense: {e}")
+        current_app.logger.error(f"Error in add_expense: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
@@ -33,7 +31,7 @@ def get_expenses(current_user):
         expenses_list, status_code = get_expenses_service(current_user)
         return jsonify(expenses_list), status_code
     except Exception as e:
-        logger.error(f"Error in get_expenses: {e}")
+        current_app.logger.error(f"Error in get_expenses: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
@@ -44,7 +42,7 @@ def get_expense_by_id(current_user, expense_id):
         response, status_code = get_expense_by_id_service(current_user, expense_id)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error in get_expense_by_id: {e}")
+        current_app.logger.error(f"Error in get_expense_by_id: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
@@ -55,7 +53,7 @@ def delete_expense(current_user, expense_id):
         response, status_code = delete_expense_service(current_user, expense_id)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error in delete_expense: {e}")
+        current_app.logger.error(f"Error in delete_expense: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
@@ -67,7 +65,7 @@ def update_expense(current_user, expense_id):
         response, status_code = update_expense_service(current_user, expense_id, data)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error in update_expense: {e}")
+        current_app.logger.error(f"Error in update_expense: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
@@ -78,5 +76,5 @@ def get_expenses_by_category(current_user, category_id):
         response, status_code = get_expenses_by_category_service(current_user, category_id)
         return jsonify(response), status_code
     except Exception as e:
-        logger.error(f"Error in get_expenses_by_category: {e}")
+        current_app.logger.error(f"Error in get_expenses_by_category: {e}")
         return jsonify({'error': 'An unexpected error occurred.'}), 500

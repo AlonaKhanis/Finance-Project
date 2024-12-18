@@ -1,20 +1,9 @@
+from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from app.models import db, Category, Expense
-import logging
+from app.error_handlers import handle_db_error , handle_unexpected_error
 
-logger = logging.getLogger(__name__)
 
-def handle_db_error(operation, error):
-    """Handles database errors and logs them consistently."""
-    db.session.rollback()
-    logger.error(f"Database error during {operation}: {error}")
-    return {'error': 'Database error occurred. Please try again later.'}, 500
-
-def handle_unexpected_error(operation, error):
-    """Handles unexpected errors and logs them consistently."""
-    db.session.rollback()
-    logger.error(f"Unexpected error during {operation}: {error}")
-    return {'error': 'An unexpected error occurred. Please try again later.'}, 500
 
 def add_expense_service(data, current_user):
     try:
@@ -38,7 +27,7 @@ def add_expense_service(data, current_user):
         db.session.add(expense)
         db.session.commit()
 
-        logger.info(f"message : Expense added successfully , expense_id {expense.expense_id}")
+        current_app.logger.info(f"message : Expense added successfully , expense_id {expense.expense_id}")
                     
         return {"message": "Expense added successfully.", "expense_id": expense.expense_id}, 201
 
@@ -59,7 +48,7 @@ def get_expenses_service(current_user):
             }
             for expense in expenses
         ]
-
+        current_app.logger.info("Expense fetch succssusfuly")
         return expenses_list, 200
 
     except SQLAlchemyError as se:
@@ -93,7 +82,7 @@ def delete_expense_service(current_user, expense_id):
 
         db.session.delete(expense)
         db.session.commit()
-        logger.info(f"Expense ID:{expense_id} deleted successfully.")
+        current_app.logger.info(f"Expense ID:{expense_id} deleted successfully.")
         return {"message": "Expense deleted successfully."}, 200
 
     except SQLAlchemyError as se:
@@ -147,7 +136,7 @@ def get_expenses_by_category_service(current_user, category_id):
             for expense in expenses
         ]
 
-        logger.info("Expenses retrieved successfully by category.")
+        current_app.logger.info("Expenses retrieved successfully by category.")
         return expenses_list, 200
 
     except SQLAlchemyError as se:
