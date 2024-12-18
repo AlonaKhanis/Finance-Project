@@ -1,132 +1,82 @@
-from flask import Blueprint , current_app, jsonify, request
-from app.models import Category, Expense
+from flask import Blueprint, current_app, jsonify, request
 from .admin_route import role_required
-from app.models import db
-
+import logging
+from app.services.expenses_service import (
+    add_expense_service,
+    get_expenses_service,
+    get_expense_by_id_service,
+    delete_expense_service,
+    update_expense_service,
+    get_expenses_by_category_service,
+)
 
 expense_bp = Blueprint('expenses', __name__)
-
+logger = logging.getLogger(__name__)
 
 
 @expense_bp.route('/add_expense', methods=['POST'])
 @role_required('user')
 def add_expense(current_user):
-    data = request.get_json()
-
-    amount = data.get('amount')
-    category_id = data.get('category_id')
-    description = data.get('description', '') 
-    is_recurring = data.get('is_recurring', False) 
-
-    if not amount or not category_id:
-        return jsonify({"error": "Amount and category ID are required."}), 400
-    if amount <= 0:
-        return jsonify({"error": "Amount must be greater than zero."}), 400
-
-
-    expense = Expense(
-        user_id=current_user.user_id,
-        category_id=category_id,
-        price=amount, 
-        description=description,
-        is_recurring=is_recurring,
-    )
-    db.session.add(expense)
-    db.session.commit()
-
-    return jsonify({"message": "Expense added successfully.", "expense_id": expense.expense_id}), 201
+    try:
+        data = request.get_json(force=True) or {}
+        response, status_code = add_expense_service(data, current_user)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error in add_expense: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
 @expense_bp.route('/get_expenses', methods=['GET'])
 @role_required('user')
 def get_expenses(current_user):
-    expenses = Expense.query.filter_by(user_id=current_user.user_id).all()
-    expenses_list = []
-    for expense in expenses:
-        expenses_list.append({
-            'expense_id': expense.expense_id,
-            'amount': expense.price,
-            'description': expense.description,
-            'created_date': expense.created_date.strftime('%Y-%m-%d %H:%M:%S'),
-        })
-    return jsonify(expenses_list), 200
+    try:
+        expenses_list, status_code = get_expenses_service(current_user)
+        return jsonify(expenses_list), status_code
+    except Exception as e:
+        logger.error(f"Error in get_expenses: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
+
 
 @expense_bp.route('/get_expense/<int:expense_id>', methods=['GET'])
 @role_required('user')
-def get_expense(current_user, expense_id):
-    expense = Expense.query.filter_by(user_id=current_user.user_id, expense_id=expense_id).first()
-    if not expense:
-        return jsonify({"error": "Expense not found."}), 404
-    return jsonify({
-        'expense_id': expense.expense_id,
-        'amount': expense.price,
-        'description': expense.description,
-        'created_date': expense.created_date.strftime('%Y-%m-%d %H:%M:%S'),
-    }), 200
+def get_expense_by_id(current_user, expense_id):
+    try:
+        response, status_code = get_expense_by_id_service(current_user, expense_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error in get_expense_by_id: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
 @expense_bp.route('/delete_expense/<int:expense_id>', methods=['DELETE'])
 @role_required('user')
 def delete_expense(current_user, expense_id):
-    expense = Expense.query.filter_by(user_id=current_user.user_id, expense_id=expense_id).first()
-    if not expense:
-        return jsonify({"error": "Expense not found."}), 404
-    db.session.delete(expense)
-    db.session.commit()
-    return jsonify({"message": "Expense deleted successfully."}), 200
+    try:
+        response, status_code = delete_expense_service(current_user, expense_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error in delete_expense: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
 
 
 @expense_bp.route('/update_expense/<int:expense_id>', methods=['PUT'])
 @role_required('user')
 def update_expense(current_user, expense_id):
-    data = request.get_json()
-    amount = data.get('amount')
-    category_id = data.get('category_id')
-    description = data.get('description', '')
-    is_recurring = data.get('is_recurring', False)
-
-    # Input validation
-    if not amount or not category_id:
-        return jsonify({"error": "Amount and category ID are required."}), 400
-    if amount <= 0:
-        return jsonify({"error": "Amount must be greater than zero."}), 400
-
-    # Validate category
-    category = Category.query.filter_by(category_id=category_id).first()
-    if not category:
-        return jsonify({"error": "Invalid category ID."}), 400
-
-    # Find the expense
-    expense = Expense.query.filter_by(user_id=current_user.user_id, expense_id=expense_id).first()
-    if not expense:
-        return jsonify({"error": "Expense not found."}), 404
-
-    # Update the expense
-    expense.price = amount
-    expense.category_id = category_id
-    expense.description = description
-    expense.is_recurring = is_recurring
-
     try:
-        db.session.commit()
-        return jsonify({"message": "Expense updated successfully."}), 200
+        data = request.get_json(force=True) or {}
+        response, status_code = update_expense_service(current_user, expense_id, data)
+        return jsonify(response), status_code
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-    
+        logger.error(f"Error in update_expense: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
+
 
 @expense_bp.route('/get_expenses_by_category/<int:category_id>', methods=['GET'])
 @role_required('user')
 def get_expenses_by_category(current_user, category_id):
-    expenses = Expense.query.filter_by(user_id=current_user.user_id, category_id=category_id).all()
-    expenses_list = []
-    for expense in expenses:
-        expenses_list.append({
-            'expense_id': expense.expense_id,
-            'amount': expense.price,
-            'description': expense.description,
-            'created_date': expense.created_date.strftime('%Y-%m-%d %H:%M:%S'),
-        })
-    return jsonify(expenses_list), 200    
-
-
+    try:
+        response, status_code = get_expenses_by_category_service(current_user, category_id)
+        return jsonify(response), status_code
+    except Exception as e:
+        logger.error(f"Error in get_expenses_by_category: {e}")
+        return jsonify({'error': 'An unexpected error occurred.'}), 500
